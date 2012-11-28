@@ -1123,6 +1123,8 @@ var TreeNodeIO = A.Component.create(
 			ioSuccessHandler: function() {
 				var instance = this;
 				var io = instance.get(IO);
+				var ownerTree = instance.get(OWNER_TREE);
+
 				var args = Array.prototype.slice.call(arguments);
 				var length = args.length;
 
@@ -1148,8 +1150,6 @@ var TreeNodeIO = A.Component.create(
 				instance.createNodes(nodes);
 
 				instance.expand();
-
-				var ownerTree = instance.get(OWNER_TREE);
 
 				if (ownerTree && ownerTree.ddDelegate) {
 					ownerTree.ddDelegate.syncTargets();
