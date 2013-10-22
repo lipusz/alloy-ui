@@ -795,7 +795,7 @@ A.mix(TreeData.prototype, {
 
 A.TreeData = TreeData;
 
-}, '1.5.0' ,{requires:['aui-base'], skinnable:false});
+}, '@VERSION@' ,{skinnable:false, requires:['aui-base']});
 AUI.add('aui-tree-node', function(A) {
 /**
  * The TreeNode Utility
@@ -1922,6 +1922,8 @@ var TreeNodeIO = A.Component.create(
 			ioSuccessHandler: function() {
 				var instance = this;
 				var io = instance.get(IO);
+				var ownerTree = instance.get(OWNER_TREE);
+
 				var args = Array.prototype.slice.call(arguments);
 				var length = args.length;
 
@@ -1947,6 +1949,10 @@ var TreeNodeIO = A.Component.create(
 				instance.createNodes(nodes);
 
 				instance.expand();
+
+				if (ownerTree && ownerTree.ddDelegate) {
+					ownerTree.ddDelegate.syncTargets();
+				}
 			},
 
 			/**
@@ -2662,7 +2668,7 @@ A.TreeNode.nodeTypes = {
 	io: A.TreeNodeIO
 };
 
-}, '1.5.0' ,{requires:['aui-tree-data','aui-io','json','querystring-stringify'], skinnable:false});
+}, '@VERSION@' ,{skinnable:false, requires:['aui-tree-data','aui-io','json','querystring-stringify']});
 AUI.add('aui-tree-view', function(A) {
 /**
  * The TreeView Utility
@@ -3651,8 +3657,8 @@ var TreeViewDD = A.Component.create(
 
 A.TreeViewDD = TreeViewDD;
 
-}, '1.5.0' ,{skinnable:true, requires:['aui-tree-node','dd-drag','dd-drop','dd-proxy']});
+}, '@VERSION@' ,{skinnable:true, requires:['aui-tree-node','dd-drag','dd-drop','dd-proxy']});
 
 
-AUI.add('aui-tree', function(A){}, '1.5.0' ,{skinnable:true, use:['aui-tree-data', 'aui-tree-node', 'aui-tree-view']});
+AUI.add('aui-tree', function(A){}, '@VERSION@' ,{use:['aui-tree-data', 'aui-tree-node', 'aui-tree-view'], skinnable:true});
 
