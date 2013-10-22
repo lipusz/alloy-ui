@@ -6,6 +6,7 @@
  */
 
 var L = A.Lang,
+	isBoolean = L.isBoolean,
 	isString = L.isString,
 
 	BOUNDING_BOX = 'boundingBox',
