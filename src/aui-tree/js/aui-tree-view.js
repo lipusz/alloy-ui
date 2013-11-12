@@ -175,6 +175,8 @@ var TreeView = A.Component.create(
 			bindUI: function() {
 				var instance = this;
 
+				instance.after('childrenChange', A.bind(instance._afterSetChildren, instance));
+
 				instance._delegateDOM();
 			},
 
@@ -189,6 +191,19 @@ var TreeView = A.Component.create(
 
 				instance._renderElements();
 			},
+
+	        /**
+	         * Fire after set children.
+	         *
+	         * @method _afterSetChildren
+	         * @param {EventFacade} event
+	         * @protected
+	         */
+	        _afterSetChildren: function(event) {
+	            var instance = this;
+
+	            instance._syncPaginatorUI();
+	        },
 
 			/**
 			 * Create TreeNode from HTML markup.
