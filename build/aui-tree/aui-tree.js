@@ -101,6 +101,8 @@ TreeData.ATTRS = {
 };
 
 A.mix(TreeData.prototype, {
+	_indexPrimed: false,
+
 	childrenLength: 0,
 
 	/**
@@ -142,6 +144,10 @@ A.mix(TreeData.prototype, {
 	 */
 	getNodeById: function(uid) {
 		var instance = this;
+
+		if (!instance._indexPrimed) {
+			instance.refreshIndex();
+		}
 
 		return instance.get(INDEX)[uid];
 	},
@@ -217,7 +223,7 @@ A.mix(TreeData.prototype, {
 		if (moved) {
 			var output = instance.getEventOutputMap(node);
 
-			if (!oldParent.get('children').length) {
+			if (!oldParent.get(CHILDREN).length) {
 				oldParent.collapse();
 				oldParent.hideHitArea();
 			}
@@ -283,6 +289,8 @@ A.mix(TreeData.prototype, {
 		var instance = this;
 
 		if (index) {
+			instance._indexPrimed = true;
+
 			instance.set(INDEX, index);
 		}
 	},
@@ -354,7 +362,7 @@ A.mix(TreeData.prototype, {
 	/**
 	 * Unselect all children of the TreeData.
 	 *
-	 * @method selectAll
+	 * @method unselectAll
 	 */
 	unselectAll: function() {
 		var instance = this;
@@ -385,7 +393,7 @@ A.mix(TreeData.prototype, {
 	/**
 	 * Loop each parent node and execute the <code>fn</code> callback.
 	 *
-	 * @method eachChildren
+	 * @method eachParent
 	 * @param {function} fn callback
 	 */
 	eachParent: function(fn) {
@@ -840,6 +848,8 @@ A.mix(TreeData.prototype, {
 					}
 				}
 
+				instance.registerNode(node);
+
 				if (hasOwnerTree) {
 					ownerTree.registerNode(node);
 				}
@@ -859,7 +869,7 @@ A.mix(TreeData.prototype, {
 
 A.TreeData = TreeData;
 
-}, '@VERSION@' ,{skinnable:false, requires:['aui-base','aui-task-manager']});
+}, '@VERSION@' ,{requires:['aui-base','aui-task-manager'], skinnable:false});
 AUI.add('aui-tree-node', function(A) {
 /**
  * The TreeNode Utility
@@ -1298,7 +1308,7 @@ var TreeNode = A.Component.create(
 			syncUI: function() {
 				var instance = this;
 
-				instance._syncHitArea( instance.get( CHILDREN ) );
+				instance._syncHitArea();
 			},
 
 			_afterDraggableChange: function(event) {
@@ -1329,7 +1339,7 @@ var TreeNode = A.Component.create(
 			_afterSetChildren: function(event) {
 				var instance = this;
 
-				instance._syncHitArea(event.newVal);
+				instance._syncHitArea();
 			},
 
 			/**
@@ -1419,10 +1429,10 @@ var TreeNode = A.Component.create(
 			 * @param {Array} children
 			 * @protected
 			 */
-			_syncHitArea: function(children) {
+			_syncHitArea: function() {
 				var instance = this;
 
-				if (instance.get(ALWAYS_SHOW_HITAREA) || children.length) {
+				if (instance.get(ALWAYS_SHOW_HITAREA) || instance.getChildrenLength()) {
 					instance.showHitArea();
 				}
 				else {
@@ -2464,7 +2474,7 @@ A.TreeNode.nodeTypes = {
 	io: A.TreeNodeIO
 };
 
-}, '@VERSION@' ,{skinnable:false, requires:['aui-tree-data','aui-tree-io','aui-tree-paginator','json','querystring-stringify']});
+}, '@VERSION@' ,{requires:['aui-tree-data','aui-tree-io','aui-tree-paginator','json','querystring-stringify'], skinnable:false});
 AUI.add('aui-tree-paginator', function(A) {
 var Lang = A.Lang,
 	isObject = Lang.isObject,
@@ -2582,7 +2592,7 @@ TreeViewPaginator.prototype = {
 		var paginator = instance.get(PAGINATOR);
 
 		if (isValue(paginator.limit)) {
-			paginator.start += paginator.limit;
+			paginator.start = instance.getChildrenLength();
 		}
 
 		if (instance.get(IO)) {
@@ -2676,7 +2686,7 @@ TreeViewPaginator.prototype = {
 
 A.TreeViewPaginator = TreeViewPaginator;
 
-}, '@VERSION@' ,{skinnable:false, requires:['aui-base']});
+}, '@VERSION@' ,{requires:['aui-base'], skinnable:false});
 AUI.add('aui-tree-view', function(A) {
 /**
  * The TreeView Utility
@@ -3636,7 +3646,7 @@ var TreeViewDD = A.Component.create(
 
 A.TreeViewDD = TreeViewDD;
 
-}, '@VERSION@' ,{requires:['aui-tree-node','aui-tree-paginator','aui-tree-io','dd-delegate','dd-proxy'], skinnable:true});
+}, '@VERSION@' ,{skinnable:true, requires:['aui-tree-node','aui-tree-paginator','aui-tree-io','dd-delegate','dd-proxy']});
 AUI.add('aui-tree-io', function(A) {
 var Lang = A.Lang,
 	isFunction = Lang.isFunction,
@@ -3686,14 +3696,6 @@ TreeViewIO.ATTRS = {
 };
 
 TreeViewIO.prototype = {
-	initializer: function() {
-		var instance = this;
-
-		instance.publish(
-
-		);
-	},
-
 	/**
 	 * Initialize the IO transaction setup on the <a
 	 * href="TreeNode.html#config_io">io</a> attribute.
@@ -3875,8 +3877,8 @@ TreeViewIO.prototype = {
 
 A.TreeViewIO = TreeViewIO;
 
-}, '@VERSION@' ,{skinnable:false, requires:['aui-io','json']});
+}, '@VERSION@' ,{requires:['aui-io','json'], skinnable:false});
 
 
-AUI.add('aui-tree', function(A){}, '@VERSION@' ,{use:['aui-tree-data', 'aui-tree-node', 'aui-tree-io', 'aui-tree-paginator', 'aui-tree-view'], skinnable:true});
+AUI.add('aui-tree', function(A){}, '@VERSION@' ,{skinnable:true, use:['aui-tree-data', 'aui-tree-node', 'aui-tree-io', 'aui-tree-paginator', 'aui-tree-view']});
 
