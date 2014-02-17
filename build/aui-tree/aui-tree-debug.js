@@ -1963,6 +1963,12 @@ var TreeNodeIO = A.Component.create(
 				var instance = this;
 
 				instance.expand();
+
+				var ownerTree = instance.get(OWNER_TREE);
+
+				if (ownerTree && ownerTree.ddDelegate) {
+					ownerTree.ddDelegate.syncTargets();
+				}
 			}
 		}
 	}
