@@ -2119,12 +2119,18 @@ var FormValidator = A.Component.create({
 
 		validatable: function(field) {
 			var instance = this;
+
+			var validatable = false;
+
 			var fieldRules = instance.get(RULES)[field.get(NAME)];
 
-			var required = fieldRules.required;
-			var hasValue = YUI.AUI.defaults.FormValidator.RULES.required.apply(instance, [field.val(), field]);
+			if (fieldRules) {
+				var required = fieldRules.required;
 
-			return (required || (!required && hasValue));
+				validatable = (required || (!required && YUI.AUI.defaults.FormValidator.RULES.required.apply(instance, [field.val(), field])));
+			}
+
+			return !!validatable;
 		},
 
 		validate: function() {
@@ -2403,5 +2409,5 @@ A.FormValidator = FormValidator;
 }, '@VERSION@' ,{requires:['aui-base','aui-event-input','selector-css3','substitute']});
 
 
-AUI.add('aui-form', function(A){}, '@VERSION@' ,{use:['aui-form-base','aui-form-combobox','aui-form-field','aui-form-select','aui-form-textarea','aui-form-textfield','aui-form-validator'], skinnable:false});
+AUI.add('aui-form', function(A){}, '@VERSION@' ,{skinnable:false, use:['aui-form-base','aui-form-combobox','aui-form-field','aui-form-select','aui-form-textarea','aui-form-textfield','aui-form-validator']});
 
