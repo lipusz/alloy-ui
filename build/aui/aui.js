@@ -4087,7 +4087,7 @@ YUI.add('yui', function(Y){}, '3.2.0' ,{use:['yui-base','get','features','rls','
 						'aui-textboxlist': {requires:['anim-node-plugin','aui-autocomplete','node-focusmanager'], skinnable:true},
 						'aui-toolbar': {requires:['aui-base','aui-button-item','aui-data-set','widget-parent'], skinnable:true},
 						'aui-tooltip': {requires:['aui-overlay-context-panel'], skinnable:true},
-						'aui-tree': {submodules: {'aui-tree-view': {requires:['aui-tree-node','dd-delegate','dd-proxy'], skinnable:true}, 'aui-tree-node': {requires:['aui-tree-data','aui-io','json','querystring-stringify'], skinnable:false}, 'aui-tree-data': {requires:['aui-base','aui-task-manager'], skinnable:false} }, use:['aui-tree-data', 'aui-tree-node', 'aui-tree-view'], skinnable:true},
+						'aui-tree': {submodules: {'aui-tree-view': {requires:['aui-tree-node','aui-tree-paginator','aui-tree-io','dd-delegate','dd-proxy'], skinnable:true}, 'aui-tree-paginator': {requires:['aui-base'], skinnable:false}, 'aui-tree-io': {requires:['aui-io','json'], skinnable:false}, 'aui-tree-node': {requires:['aui-tree-data','aui-tree-io','aui-tree-paginator','json','querystring-stringify'], skinnable:false}, 'aui-tree-data': {requires:['aui-base','aui-task-manager'], skinnable:false} }, use:['aui-tree-data', 'aui-tree-node', 'aui-tree-io', 'aui-tree-paginator', 'aui-tree-view'], skinnable:true},
 						'aui-video': {requires:['aui-base','querystring-stringify-simple'], skinnable:true},
 						'aui-viewport': {requires:['aui-base','aui-debounce'], skinnable:false}
 				}
