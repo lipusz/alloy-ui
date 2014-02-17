@@ -22,8 +22,8 @@ var L = A.Lang,
 	EXPANDED = 'expanded',
 	HELPER = 'helper',
 	HIDDEN = 'hidden',
-	HITAREA = 'hitarea',
 	HIT_AREA_EL = 'hitAreaEl',
+	HITAREA = 'hitarea',
 	ICON = 'icon',
 	ICON_EL = 'iconEl',
 	ID = 'id',
@@ -35,6 +35,8 @@ var L = A.Lang,
 	OVER = 'over',
 	OWNER_TREE = 'ownerTree',
 	PARENT_NODE = 'parentNode',
+	RADIO = 'radio',
+	RENDERED = 'rendered',
 	SELECTED = 'selected',
 	SPACE = ' ',
 	TREE = 'tree',
@@ -57,11 +59,13 @@ var L = A.Lang,
 	CSS_HELPER_CLEARFIX = getCN(HELPER, CLEARFIX),
 	CSS_TREE_COLLAPSED = getCN(TREE, COLLAPSED),
 	CSS_TREE_CONTAINER = getCN(TREE, CONTAINER),
+	CSS_TREE_CONTENT_BOX = getCN(TREE, CONTENT_BOX),
 	CSS_TREE_EXPANDED = getCN(TREE, EXPANDED),
 	CSS_TREE_HIDDEN = getCN(TREE, HIDDEN),
 	CSS_TREE_HITAREA = getCN(TREE, HITAREA),
 	CSS_TREE_ICON = getCN(TREE, ICON),
 	CSS_TREE_LABEL = getCN(TREE, LABEL),
+	CSS_TREE_NODE = getCN(TREE, NODE),
 	CSS_TREE_NODE_CONTENT = getCN(TREE, NODE, CONTENT),
 	CSS_TREE_NODE_HIDDEN_HITAREA = getCN(TREE, NODE, HIDDEN, HITAREA),
 	CSS_TREE_NODE_LEAF = getCN(TREE, NODE, LEAF),
@@ -73,7 +77,7 @@ var L = A.Lang,
 	LABEL_TPL = '<div class="'+CSS_TREE_LABEL+'"></div>',
 	NODE_CONTAINER_TPL = '<ul></ul>',
 
-	NODE_BOUNDING_TEMPLATE = '<li></li>',
+	NODE_BOUNDING_TEMPLATE = '<li class="'+CSS_TREE_NODE+'"></li>',
 	NODE_CONTENT_TEMPLATE = '<div class="'+concat(CSS_HELPER_CLEARFIX, CSS_TREE_NODE_CONTENT)+'"></div>';
 
 /**
@@ -119,6 +123,19 @@ var TreeNode = A.Component.create(
 		 * @static
 		 */
 		ATTRS: {
+
+			boundingBox: {
+				valueFn: function() {
+					return A.Node.create(NODE_BOUNDING_TEMPLATE);
+				}
+			},
+
+			contentBox: {
+				valueFn: function() {
+					return A.Node.create(NODE_CONTENT_TEMPLATE);
+				}
+			},
+
 			/**
 			 * If true the TreeNode is draggable.
 			 *
@@ -206,6 +223,7 @@ var TreeNode = A.Component.create(
 			 * @type TreeNode
 			 */
 			nextSibling: {
+				getter: '_getSibling',
 				value: null,
 				validator: isTreeNode
 			},
@@ -218,6 +236,7 @@ var TreeNode = A.Component.create(
 			 * @type TreeNode
 			 */
 			prevSibling: {
+				getter: '_getSibling',
 				value: null,
 				validator: isTreeNode
 			},
@@ -293,12 +312,17 @@ var TreeNode = A.Component.create(
 
 			tabIndex: {
 				value: null
+			},
+
+			rendered: {
+				validator: isBoolean,
+				value: false
 			}
 		},
 
-		EXTENDS: A.TreeData,
+		AUGMENTS: [A.TreeData],
 
-		UI_ATTRS: [EXPANDED],
+		EXTENDS: A.Base,
 
 		prototype: {
 			/**
@@ -326,6 +350,9 @@ var TreeNode = A.Component.create(
 			 */
 			initializer: function() {
 				var instance = this;
+				var boundingBox = instance.get(BOUNDING_BOX);
+
+				boundingBox.setData(TREE_NODE, instance);
 
 				// NOTE: Deprecated expand/collapse placeholders, use '*:expandedChange' event instead
 				instance.on({
@@ -336,6 +363,9 @@ var TreeNode = A.Component.create(
 
 				// Sync the Widget TreeNode id with the BOUNDING_BOX id
 				instance._syncTreeNodeBBId();
+
+				instance._uiSetExpanded(instance.get(EXPANDED));
+				instance._uiSetLeaf(instance.get(LEAF));
 			},
 
 			/**
@@ -348,21 +378,26 @@ var TreeNode = A.Component.create(
 				var instance = this;
 
 				instance.after('childrenChange', A.bind(instance._afterSetChildren, instance));
+				instance.after('expandedChange', A.bind(instance._afterExpandedChange, instance));
 				instance.after('idChange', instance._afterSetId, instance);
+				instance.after('leafChange', A.bind(instance._afterLeafChange, instance));
 			},
 
-			/**
-			 * Create the DOM structure for the TreeNode. Lifecycle. Overloading
-		     * private _renderUI, don't call this._renderBox method avoid render node on
-		     * the body.
-			 *
-			 * @method _renderUI
-			 * @protected
-			 */
-		    _renderUI: function(parentNode) {
-		        this._renderBoxClassNames();
-				// this._renderBox(parentNode);
-		    },
+			render: function(container) {
+				var instance = this;
+
+				if (!instance.get(RENDERED)) {
+					instance.renderUI();
+					instance.bindUI();
+					instance.syncUI();
+
+					instance.set(RENDERED, true);
+				}
+
+				if (container) {
+					instance.get(BOUNDING_BOX).appendTo(container);
+				}
+			},
 
 			/**
 			 * Create the DOM structure for the TreeNode. Lifecycle.
@@ -389,6 +424,31 @@ var TreeNode = A.Component.create(
 				instance._syncHitArea( instance.get( CHILDREN ) );
 			},
 
+			_afterExpandedChange: function(event) {
+				var instance = this;
+
+				instance._uiSetExpanded(event.newVal);
+			},
+
+			_afterLeafChange: function(event) {
+				var instance = this;
+
+				instance._uiSetLeaf(event.newVal);
+			},
+
+			/**
+			 * Fires after set children.
+			 *
+			 * @method _afterSetChildren
+			 * @param {EventFacade} event
+			 * @protected
+			 */
+			_afterSetChildren: function(event) {
+				var instance = this;
+
+				instance._syncHitArea(event.newVal);
+			},
+
 			/**
 			 * Render the <code>contentBox</code> node.
 			 *
@@ -400,11 +460,7 @@ var TreeNode = A.Component.create(
 				var instance = this;
 				var contentBox = instance.get(CONTENT_BOX);
 
-				if (instance.isLeaf()) {
-					// add leaf css classes
-					contentBox.addClass(CSS_TREE_NODE_LEAF);
-				}
-				else {
+				if (!instance.isLeaf()) {
 					var expanded = instance.get(EXPANDED);
 
 					// add folder css classes state
@@ -434,18 +490,12 @@ var TreeNode = A.Component.create(
 
 				var nodeContainer = null;
 
-				if (!instance.isLeaf()) {
-					// append hitarea element
-					contentBox.append( instance.get(HIT_AREA_EL) );
-
-					// if has children append them to this model
-					nodeContainer = instance._createNodeContainer();
-				}
-
 				contentBox.append( instance.get(ICON_EL) );
 				contentBox.append( instance.get(LABEL_EL) );
 
 				boundingBox.append(contentBox);
+
+				var nodeContainer = instance.get(CONTAINER);
 
 				if (nodeContainer) {
 					if (!instance.get(EXPANDED)) {
@@ -475,10 +525,6 @@ var TreeNode = A.Component.create(
 
 				// when it's not a leaf it has a <ul> container
 				instance.set(CONTAINER, nodeContainer);
-
-				instance.eachChildren(function(node) {
-					instance.appendChild(node);
-				});
 
 				return nodeContainer;
 			},
@@ -542,7 +588,7 @@ var TreeNode = A.Component.create(
 			 * @return {boolean}
 			 */
 			contains: function(node) {
-		        return node.isAncestor(this);
+				return node.isAncestor(this);
 			},
 
 			/**
@@ -631,26 +677,6 @@ var TreeNode = A.Component.create(
 				}
 
 				return false;
-			},
-
-			insertAfter: function(node, refNode) {
-				var instance = this;
-
-				A.TreeNode.superclass.insertAfter.apply(this, [node, instance]);
-			},
-
-			insertBefore: function(node) {
-				var instance = this;
-
-				A.TreeNode.superclass.insertBefore.apply(this, [node, instance]);
-			},
-
-			removeChild: function(node) {
-				var instance = this;
-
-				if (!instance.isLeaf()) {
-					A.TreeNode.superclass.removeChild.apply(instance, arguments);
-				}
 			},
 
 			/**
@@ -758,17 +784,18 @@ var TreeNode = A.Component.create(
 				);
 			},
 
-			/**
-			 * Fires after set children.
-			 *
-			 * @method _afterSetChildren
-			 * @param {EventFacade} event
-			 * @protected
-			 */
-			_afterSetChildren: function(event) {
+			_getSibling: function(value, attrName) {
 				var instance = this;
 
-				instance._syncHitArea(event.newVal);
+				var propName = '_' + attrName;
+				var sibling = instance[propName];
+
+				if (sibling !== null && !isTreeNode(sibling)) {
+					sibling = null;
+					instance[propName] = sibling;
+				}
+
+				return sibling;
 			},
 
 			_uiSetExpanded: function(val) {
@@ -793,6 +820,28 @@ var TreeNode = A.Component.create(
 						}
 					}
 				}
+			},
+
+			_uiSetLeaf: function(val) {
+				var instance = this;
+				var contentBox = instance.get(CONTENT_BOX);
+
+				if (val) {
+					instance.get(CONTAINER).remove();
+					instance.get(HIT_AREA_EL).remove();
+				}
+				else {
+					// append hitarea element
+					contentBox.prepend( instance.get(HIT_AREA_EL) );
+
+					// if has children append them to this model
+					instance._createNodeContainer();
+
+					instance._uiSetExpanded(instance.get(EXPANDED));
+				}
+
+				// add leaf css classes
+				contentBox.toggleClass(CSS_TREE_NODE_LEAF, val);
 			}
 		}
 	}
@@ -947,8 +996,6 @@ var TreeNodeIO = A.Component.create(
 		},
 
 		EXTENDS: A.TreeNode,
-
-		UI_ATTRS: [EXPANDED],
 
 		prototype: {
 			/**
@@ -1458,14 +1505,14 @@ var TreeNodeCheck = A.Component.create(
 
 		EXTENDS: A.TreeNodeIO,
 
-		UI_ATTRS: [CHECKED, EXPANDED],
-
 		prototype: {
 			/*
 			* Lifecycle
 			*/
 			initializer: function() {
 				var instance = this;
+
+				instance._uiSetChecked(instance.get(CHECKED));
 
 				// NOTE: Deprecated check/uncheck placeholders, use '*:checkedChange' event instead
 				instance.on({
@@ -1501,6 +1548,8 @@ var TreeNodeCheck = A.Component.create(
 				var labelEl = instance.get(LABEL_EL);
 
 				A.TreeNodeCheck.superclass.bindUI.apply(instance, arguments);
+
+				instance.after('checkedChange', A.bind(instance._afterCheckedChange, instance));
 
 				contentBox.delegate('click', A.bind(instance.toggleCheck, instance), DOT+CSS_TREE_NODE_CHECKBOX_CONTAINER);
 				contentBox.delegate('click', A.bind(instance.toggleCheck, instance), DOT+CSS_TREE_LABEL);
@@ -1563,6 +1612,12 @@ var TreeNodeCheck = A.Component.create(
 				var instance = this;
 
 				return instance.get(CHECKED);
+			},
+
+			_afterCheckedChange: function(event) {
+				var instance = this;
+
+				instance._uiSetChecked(event.newVal);
 			},
 
 			_uiSetChecked: function(val) {
@@ -1628,8 +1683,6 @@ var TreeNodeTask = A.Component.create(
 
 		EXTENDS: A.TreeNodeCheck,
 
-		UI_ATTRS: [CHECKED, EXPANDED],
-
 		prototype: {
 			/*
 			* Methods
@@ -1659,7 +1712,7 @@ var TreeNodeTask = A.Component.create(
 				contentBox.removeClass(CSS_TREE_NODE_CHILD_UNCHECKED);
 
 				// invoke default check logic
-				A.TreeNodeTask.superclass.check.call(this, originalTarget);
+				A.TreeNodeTask.superclass.check.apply(this, [originalTarget]);
 			},
 
 			uncheck: function(originalTarget) {
@@ -1687,7 +1740,7 @@ var TreeNodeTask = A.Component.create(
 				contentBox.removeClass(CSS_TREE_NODE_CHILD_UNCHECKED);
 
 				// invoke default uncheck logic
-				A.TreeNodeTask.superclass.uncheck.call(this, originalTarget);
+				A.TreeNodeTask.superclass.uncheck.apply(this, [originalTarget]);
 			}
 		}
 	}
