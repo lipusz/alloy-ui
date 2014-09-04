@@ -703,9 +703,9 @@ var Calendar = A.Component.create(
 			getCurrentDate: function(offsetYear, offsetMonth, offsetDay) {
 				var instance = this;
 				var date = instance._normalizeYearMonth();
-				var newDay = date.day + toInt(offsetDay);
-				var newMonth = date.month + toInt(offsetMonth);
-				var newYear = date.year + toInt(offsetYear);
+				var newDay = date.day + toNumber(offsetDay);
+				var newMonth = date.month + toNumber(offsetMonth);
+				var newYear = date.year + toNumber(offsetYear);
 				var totalMonthDays = instance.getDaysInMonth(date.year, newMonth);
 
 				if (newDay > totalMonthDays) {
