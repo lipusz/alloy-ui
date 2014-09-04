@@ -835,6 +835,7 @@ var DatePickerSelect = A.Component.create(
 			_syncSelectsUI: function() {
 				var instance = this;
 
+				instance._populateSelects();
 				instance._selectCurrentDay();
 				instance._selectCurrentMonth();
 				instance._selectCurrentYear();
@@ -877,4 +878,4 @@ var DatePickerSelect = A.Component.create(
 
 A.DatePickerSelect = DatePickerSelect;
 
-}, '@VERSION@' ,{requires:['aui-datepicker-base','aui-button-item'], skinnable:true});
+}, '@VERSION@' ,{skinnable:true, requires:['aui-datepicker-base','aui-button-item']});
